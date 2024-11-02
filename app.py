@@ -1,174 +1,93 @@
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify, request
 from flask_restful import Api, Resource
-from datetime import datetime
 
 app = Flask(__name__)
 api = Api(app)
 
-# Contoh data produk
-products = [
-    {"id": "1", "name": "Semen", "description": "Semen berkualitas tinggi untuk konstruksi."},
-    {"id": "2", "name": "Pasir", "description": "Pasir halus untuk bangunan."},
-    {"id": "3", "name": "Batu Bata", "description": "Batu bata merah untuk dinding."},
-    {"id": "4", "name": "Paku", "description": "Paku galvanis untuk sambungan."},
-    {"id": "5", "name": "Cat", "description": "Cat tembok untuk interior dan eksterior."},
-    {"id": "6", "name": "Papan Kayu", "description": "Papan kayu untuk konstruksi."},
-    {"id": "7", "name": "Kawat Las", "description": "Kawat las untuk sambungan logam."},
-    {"id": "8", "name": "Semen Instan", "description": "Semen instan untuk kemudahan penggunaan."},
-    {"id": "9", "name": "Gergaji", "description": "Gergaji tangan untuk pemotongan kayu."},
-    {"id": "10", "name": "Obeng", "description": "Obeng untuk berbagai jenis sekrup."}
+# Data contoh untuk bahan bangunan
+bahan_bangunan = [
+    {"id": 1, "name": "Semenn", "category": "Beton", "price": 50000, "available": True, "stock": 100},
+    {"id": 2, "name": "Besi Beton", "category": "Logam", "price": 150000, "available": True, "stock": 50},
+    {"id": 3, "name": "Bata", "category": "Masonry", "price": 1000, "available": True, "stock": 500},
+    {"id": 4, "name": "Plywood", "category": "Kayu", "price": 200000, "available": True, "stock": 30},
+    {"id": 5, "name": "Cat", "category": "Finishing", "price": 80000, "available": True, "stock": 80},
+    {"id": 6, "name": "Seng Atap", "category": "Atap", "price": 120000, "available": False, "stock": 0},
+    {"id": 7, "name": "Bahan Insulasi", "category": "Isolasi", "price": 60000, "available": True, "stock": 40},
+    {"id": 8, "name": "Keramik", "category": "Lantai", "price": 25000, "available": True, "stock": 200},
+    {"id": 9, "name": "Sekrup dan Pengikat", "category": "Perkakas", "price": 15000, "available": True, "stock": 300},
+    {"id": 10, "name": "Bata Semen", "category": "Beton", "price": 1200, "available": True, "stock": 150}
 ]
 
-details = {
-    "1": {
-        "name": "Semen",
-        "description": "Semen berkualitas tinggi untuk konstruksi.",
-        "customerReviews": []
-    },
-    "2": {
-        "name": "Pasir",
-        "description": "Pasir halus untuk bangunan.",
-        "customerReviews": []
-    },
-    "3": {
-        "name": "Batu Bata",
-        "description": "Batu bata merah untuk dinding.",
-        "customerReviews": []
-    },
-    "4": {
-        "name": "Paku",
-        "description": "Paku galvanis untuk sambungan.",
-        "customerReviews": []
-    },
-    "5": {
-        "name": "Cat",
-        "description": "Cat tembok untuk interior dan eksterior.",
-        "customerReviews": []
-    },
-    "6": {
-        "name": "Papan Kayu",
-        "description": "Papan kayu untuk konstruksi.",
-        "customerReviews": []
-    },
-    "7": {
-        "name": "Kawat Las",
-        "description": "Kawat las untuk sambungan logam.",
-        "customerReviews": []
-    },
-    "8": {
-        "name": "Semen Instan",
-        "description": "Semen instan untuk kemudahan penggunaan.",
-        "customerReviews": []
-    },
-    "9": {
-        "name": "Gergaji",
-        "description": "Gergaji tangan untuk pemotongan kayu.",
-        "customerReviews": []
-    },
-    "10": {
-        "name": "Obeng",
-        "description": "Obeng untuk berbagai jenis sekrup.",
-        "customerReviews": []
-    }
-}
+# Fungsi bantu untuk mendapatkan ID baru
+def get_new_id():
+    if bahan_bangunan:
+        return max(item["id"] for item in bahan_bangunan) + 1
+    return 1
 
-class ProductList(Resource):
+# Endpoint daftar bahan bangunan dengan opsi Create
+class DaftarBahanBangunan(Resource):
     def get(self):
-        return {
-            "error": False,
-            "message": "success",
-            "count": len(products),
-            "products": products
-        }
+        return {"error": False, "message": "berhasil", "count": len(bahan_bangunan), "items": bahan_bangunan}
 
-class ProductDetail(Resource):
-    def get(self, product_id):
-        if product_id in details:
-            return {
-                "error": False,
-                "message": "success",
-                "product": details[product_id]
-            }
-        return {"error": True, "message": "Product not found"}, 404
-
-class ProductSearch(Resource):
-    def get(self):
-        query = request.args.get('q', '').lower()
-        result = [p for p in products if query in p['name'].lower() or query in p['description'].lower()]
-        return {
-            "error": False,
-            "found": len(result),
-            "products": result
-        }
-
-class AddReview(Resource):
+# Resource TambahBahanBangunan
+class TambahBahanBangunan(Resource):
     def post(self):
-        data = request.get_json()
-        product_id = data.get('id')
-        name = data.get('name')
-        review = data.get('review')
+        data = request.json
+        new_id = get_new_id()
         
-        if product_id in details:
-            new_review = {
-                "name": name,
-                "review": review,
-                "date": datetime.now().strftime("%d %B %Y")
-            }
-            details[product_id]['customerReviews'].append(new_review)
-            return {
-                "error": False,
-                "message": "success",
-                "customerReviews": details[product_id]['customerReviews']
-            }
-        return {"error": True, "message": "Product not found"}, 404
-
-class UpdateReview(Resource):
-    def put(self):
-        data = request.get_json()
-        product_id = data.get('id')
-        name = data.get('name')
-        new_review_text = data.get('review')
+        new_item = {
+            "id": new_id,
+            "name": data.get("name"),
+            "category": data.get("category"),
+            "price": data.get("price"),
+            "available": data.get("available", True),
+            "stock": data.get("stock", 0)
+        }
+        bahan_bangunan.append(new_item)
         
-        if product_id in details:
-            reviews = details[product_id]['customerReviews']
-            review_to_update = next((r for r in reviews if r['name'] == name), None)
-            if review_to_update:
-                review_to_update['review'] = new_review_text
-                review_to_update['date'] = datetime.now().strftime("%d %B %Y")
-                return {
-                    "error": False,
-                    "message": "success",
-                    "customerReviews": reviews
-                }
-            return {"error": True, "message": "Review not found"}, 404
-        return {"error": True, "message": "Product not found"}, 404
+        return {"error": False, "message": "Item berhasil dibuat", "item": new_item}, 201
 
-class DeleteReview(Resource):
-    def delete(self):
-        data = request.get_json()
-        product_id = data.get('id')
-        name = data.get('name')
+# Endpoint detail bahan bangunan dengan opsi Read, Update, dan Delete
+class DetailBahanBangunan(Resource):
+    def get(self, item_id):
+        item = next((item for item in bahan_bangunan if item["id"] == item_id), None)
+        if not item:
+            return {"error": True, "message": "Item tidak ditemukan"}, 404
+        return {"error": False, "message": "berhasil", "item": item}
+
+# Resource UpdateBahanBangunan
+class UpdateBahanBangunan(Resource):
+    def put(self, item_id):
+        data = request.json
+        item = next((item for item in bahan_bangunan if item["id"] == item_id), None)
+        if not item:
+            return {"error": True, "message": "Item tidak ditemukan"}, 404
         
-        if product_id in details:
-            reviews = details[product_id]['customerReviews']
-            review_to_delete = next((r for r in reviews if r['name'] == name), None)
-            if review_to_delete:
-                reviews.remove(review_to_delete)
-                return {
-                    "error": False,
-                    "message": "success",
-                    "customerReviews": reviews
-                }
-            return {"error": True, "message": "Review not found"}, 404
-        return {"error": True, "message": "Product not found"}, 404
+        # Memperbarui data item
+        item.update({
+            "name": data.get("name", item["name"]),
+            "category": data.get("category", item["category"]),
+            "price": data.get("price", item["price"]),
+            "available": data.get("available", item["available"]),
+            "stock": data.get("stock", item["stock"])
+        })
+        
+        return {"error": False, "message": "Item berhasil diperbarui", "item": item}
 
-# Register endpoints
-api.add_resource(ProductList, '/products')
-api.add_resource(ProductDetail, '/product/<string:product_id>')
-api.add_resource(ProductSearch, '/products/search')
-api.add_resource(AddReview, '/product/review')
-api.add_resource(UpdateReview, '/product/review/update')
-api.add_resource(DeleteReview, '/product/review/delete')
+# Resource HapusBahanBangunan
+class HapusBahanBangunan(Resource):
+    def delete(self, item_id):
+        global bahan_bangunan
+        bahan_bangunan = [item for item in bahan_bangunan if item["id"] != item_id]
+        
+        return {"error": False, "message": "Item berhasil dihapus"}
 
-if __name__ == '__main__':
+# Mendaftarkan resource dengan endpoint
+api.add_resource(DaftarBahanBangunan, "/materials")  # Untuk GET
+api.add_resource(TambahBahanBangunan, '/materials/add')  # Untuk POST
+api.add_resource(DetailBahanBangunan, "/materials/<int:item_id>")  # Untuk GET
+api.add_resource(UpdateBahanBangunan, '/materials/update/<int:item_id>')  # Untuk PUT
+api.add_resource(HapusBahanBangunan, '/materials/delete/<int:item_id>')  # Untuk DELETE
+
+if __name__ == "__main__":
     app.run(debug=True)
